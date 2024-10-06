@@ -285,7 +285,7 @@ export default function Simulation() {
 
       {!loading && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center bg-opacity-75 bg-gray-900 p-4 rounded-lg">
-          <p className="text-white font-bold text-3xl">
+          <p className="text-white font-bold text-3xl text-center">
             {moment(julianToDate(julianDate)).format("HH:mm:ss DD MMM YYYY")}
           </p>
           <div className="flex space-x-4 mt-2 items-center">

@@ -1,12 +1,11 @@
-import { useRef, useEffect, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { TextureLoader } from 'three';
-import { useLoader } from '@react-three/fiber';
-import * as THREE from 'three';
-import { PlanetProps } from '../utils/Types';
-import OrbitTrail from './OrbitTrail';
-import { Html } from '@react-three/drei';
-import { useSpring, a } from '@react-spring/three'; // Import animated from react-spring
+import { a, useSpring } from "@react-spring/three"; // Import animated from react-spring
+import { Html } from "@react-three/drei";
+import { useFrame, useLoader } from "@react-three/fiber";
+import { useEffect, useRef, useState } from "react";
+import * as THREE from "three";
+import { TextureLoader } from "three";
+import { PlanetProps } from "../utils/Types";
+import OrbitTrail from "./OrbitTrail";
 
 export default function Planet({
   textureUrl,
@@ -53,6 +52,7 @@ export default function Planet({
     scale: hovered ? size * 5 : size, // Scale up when hovered
     config: { tension: 300, friction: 30 }, // Adjust animation speed and bounciness
   });
+  // const gltf = useLoader(GLTFLoader, `/models/${name.toLowerCase()}.glb`)
 
   return (
     <>
@@ -68,13 +68,19 @@ export default function Planet({
         <sphereGeometry args={[size, 32, 32]} />
         <meshStandardMaterial map={texture} />
       </a.mesh>
-
+      {/* <primitive position={position} scale={size} object={gltf.scene} /> */}
       {/* Render orbit trail */}
-      <OrbitTrail onClick={onClick} lineColor={lineColor} points={orbitPoints} hovered={hovered} setHovered={handleHover} />
+      <OrbitTrail
+        onClick={onClick}
+        lineColor={lineColor}
+        points={orbitPoints}
+        hovered={hovered}
+        setHovered={handleHover}
+      />
 
       {/* Tooltip */}
       {showTooltip && (
-        <Html key={planetRef.current?.position.x} position={planetRef.current?.position} className="w-72">
+        <Html key={position[0]} position={position} className="w-72">
           <div className="tooltip text-white font-bold">{name}</div>
         </Html>
       )}

@@ -1,6 +1,10 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
-export default function Loader({ onLoadComplete }: {onLoadComplete: () => void}) {
+export default function Loader({
+  onLoadComplete,
+}: {
+  onLoadComplete: () => void;
+}) {
   const fadeVariants = {
     initial: { opacity: 1 },
     animate: { opacity: 0, transition: { duration: 1, delay: 3 } },
@@ -9,7 +13,7 @@ export default function Loader({ onLoadComplete }: {onLoadComplete: () => void})
   return (
     <motion.div
       className="absolute flex top-0 left-0 w-screen h-screen bg-center bg-contain"
-      style={{ backgroundImage: 'url(/stars.gif)' }} // Change to your GIF path
+      style={{ backgroundImage: "url(/stars.gif)" }} // Change to your GIF path
       initial="initial"
       animate="animate"
       onAnimationComplete={onLoadComplete}
@@ -25,4 +29,4 @@ export default function Loader({ onLoadComplete }: {onLoadComplete: () => void})
       />
     </motion.div>
   );
-};
+}

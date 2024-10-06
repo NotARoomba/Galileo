@@ -1,7 +1,6 @@
-import React, { useRef, useEffect, useState, PointerEvent, Ref } from "react";
-import { OrbitTrailProps } from "../utils/Types";
-import * as THREE from "three";
+import { PointerEvent, Ref, useRef } from "react";
 import { Line } from "three";
+import { OrbitTrailProps } from "../utils/Types";
 
 export default function OrbitTrail({
   points,

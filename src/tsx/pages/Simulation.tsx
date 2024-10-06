@@ -21,18 +21,67 @@ export default function Simulation() {
   const intervalRef = useRef<number | undefined>(undefined);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // State for modal
   const [selectedPlanetData, setSelectedPlanetData] = useState<KeplerianElement | null>(null); // State for selected planet data
+  const [focusedPlanet, setFocusedPlanet] = useState<Planets | "Sun">("Sun")
   const animationTimeoutRef = useRef<number | null>(null); // Reference for animation timeout
+  const [asteroidsRAW, setAsteroidsRAW] = useState<KeplerianElement[]>([])
+  const [asteroids, setAsteroids] = useState<SimplifiedPlanet[]>([])
+
+  // Fetch asteroid data from NASA's Open Data API
+  const calclateAsteroidPositions = (a: KeplerianElement[]) => {
+    return (a).map((asteroid) => {
+      const pos = planetPosition(julianDate, asteroid);
+      const orbitPoints = computeOrbit(julianDate, asteroid);
+      return { name: asteroid.object, position: pos, orbit: orbitPoints };
+    });
+  };
+  const calculatePlanetPositions = () => {
+    return Object.keys(PlanetData).map((key) => {
+      const planet = PlanetData[key as keyof typeof PlanetData];
+      const pos = planetPosition(julianDate, key as Planets);
+      const orbitPoints = computeOrbit(julianDate, key as Planets);
+      return { name: planet.object, position: pos, orbit: orbitPoints };
+    });
+  };
+  useEffect(() => {
+    const fetchAsteroids = async () => {
+      try {
+        const response = await fetch("https://data.nasa.gov/resource/b67r-rgxc.json");
+        const data = await response.json();
+    
+        const transformedAsteroids = data.map((asteroid: any): KeplerianElement => {
+          return {
+            object: asteroid.object_name,
+            a: (parseFloat(asteroid.q_au_1) + parseFloat(asteroid.q_au_2)) / 2, // Semi-major axis (average of perihelion and aphelion)
+            a_dot: 0, // Placeholder, you may want to compute or estimate this
+            e: parseFloat(asteroid.e), // Eccentricity
+            e_dot: 0, // Placeholder
+            i_deg: parseFloat(asteroid.i_deg), // Inclination in degrees
+            i_dot: 0, // Placeholder
+            L_deg: 0, // Placeholder (Mean longitude)
+            L_dot: 0, // Placeholder
+            w_deg: parseFloat(asteroid.w_deg), // Argument of periapsis
+            w_dot: 0, // Placeholder
+            node_deg: parseFloat(asteroid.node_deg), // Longitude of ascending node
+            node_dot: 0, // Placeholder
+            size: parseFloat(asteroid.moid_au) * SCALE, // Assuming MOID gives a rough idea of size
+            lineColor: "gray", // Customize based on conditions, or leave it static
+            rotationSpeed: 0.01, // Static or computed based on object properties
+          };
+        });
+        setAsteroidsRAW(transformedAsteroids)
+        setAsteroids(calclateAsteroidPositions(transformedAsteroids));
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching asteroid data:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchAsteroids();
+  }, []);
 
   // Calculate and update the planet positions
   useEffect(() => {
-    const calculatePlanetPositions = () => {
-      return Object.keys(PlanetData).map((key) => {
-        const planet = PlanetData[key as keyof typeof PlanetData];
-        const pos = planetPosition(julianDate, key as Planets);
-        const orbitPoints = computeOrbit(julianDate, key as Planets);
-        return { name: planet.object, position: pos, orbit: orbitPoints };
-      });
-    };
 
     if (intervalRef.current) clearInterval(intervalRef.current);
 
@@ -40,6 +89,7 @@ export default function Simulation() {
     intervalRef.current = setInterval(() => {
       if (!paused) {
         setPlanetPositions(calculatePlanetPositions());
+        setAsteroids(calclateAsteroidPositions(asteroidsRAW))
         const timeStep = Math.sign(speed) * Math.max(10, Math.abs(speed)) * 0.001; // Increase time step with speed
         setJulianDate((prevDate) => prevDate + timeStep); // Faster progression as speed increases
       }
@@ -112,7 +162,7 @@ export default function Simulation() {
       <Canvas className="w-screen h-screen" camera={{ far: 10000000 }}>
         {/* Rendering stars and sun */}
         <Stars radius={5000} depth={50} count={10000} factor={100} saturation={0} fade speed={1} />
-        <Sun position={[0, 0, 0]} intensity={1000} size={(1 / SCALE) * 69634.0} />
+        <Sun position={[0, 0, 0]} intensity={1000} size={(1 / SCALE) * 696340} />
 
         {/* Rendering planets */}
         {planetPositions.map((planet) => (
@@ -122,37 +172,59 @@ export default function Simulation() {
            onClick={() => handlePlanetClick(planet)} // Pass the planet data to the click handler
            textureUrl={`/textures/${planet.name.toLowerCase()}.jpg`}
            size={PlanetData[planet.name.toLowerCase()].size * (3 / SCALE)}
-           position={[planet.position.x, planet.position.y, planet.position.z]}
-           orbitPoints={planet.orbit.map((point) => [point.x, point.y, point.z])}
+           position={planet.position}
+           orbitPoints={planet.orbit}
            lineColor={PlanetData[planet.name.toLowerCase()].lineColor}
            rotationSpeed={PlanetData[planet.name.toLowerCase()].rotationSpeed}
            inclination={PlanetData[planet.name.toLowerCase()].i_deg} 
          />
         ))}
 
-        <OrbitControls zoom0={1 / (SCALE ** 2)} enableZoom={true} enablePan={false} enableRotate={true} target={[0, 0, 0]} />
+{asteroids.map((asteroid) => (
+          <mesh key={asteroid.name} position={asteroid.position}>
+            <sphereGeometry args={[5, 32, 32]} />
+            <meshStandardMaterial color="gray" />
+          </mesh>
+        ))}
+
+        <OrbitControls key={julianDate} zoom0={1 / (SCALE ** 2)} enableZoom={true} enablePan={false} enableRotate={true} target={focusedPlanet == "Sun" ? [0, 0, 0] : planetPositions.find(v => v.name == focusedPlanet)?.position} />
         <ambientLight intensity={1} />
       </Canvas>
       {loading && <Loader onLoadComplete={handleLoadComplete} />}
       {/* Speed control and pause/play UI */}
+
       {!loading && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center bg-opacity-75 bg-gray-900 p-4 rounded-lg">
           <p className="text-white font-bold text-3xl">{moment(julianToDate(julianDate)).format("DD MMM YYYY")}</p>
           <div className="flex space-x-4 mt-2 items-center">
             <button onClick={decreaseSpeed} className="bg-gray-800 text-white px-4 py-2 rounded flex items-center" disabled={speed === -10000}>
+            <FaChevronLeft />
+            </button>
+            {/* <button onClick={togglePause} className="bg-gray-800 text-white px-4 py-2 rounded">
+              {paused ? <FaPlay /> : <FaPause />}
+            </button> */}
+            <button onClick={increaseSpeed} className="bg-gray-800 text-white px-4 py-2 rounded flex items-center" disabled={speed === 10000}>
+            <FaChevronRight />
+            </button>
+          </div>
+          <p className="text-white text-lg mt-2 font-semibold">Speed: {speed > 0 ? `x${Math.round(speed)}` : `x-${Math.abs(Math.round(speed))}`}</p>
+        </div>
+      )}  
+          {!loading && <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center bg-opacity-75 bg-gray-900 p-4 rounded-lg">
+      <p className="text-white font-bold text-3xl">{focusedPlanet}</p>
+      <div className="flex space-x-4 mt-2 items-center">
+            <button onClick={() => setFocusedPlanet(v => v == "Sun" ? "Neptune" as Planets : Object.values(Planets)[Object.values(Planets).indexOf(v)-1] ?? "Sun")} className="bg-gray-800 text-white px-4 py-2 rounded flex items-center" disabled={speed === -10000}>
               {renderChevrons("left")}
             </button>
             <button onClick={togglePause} className="bg-gray-800 text-white px-4 py-2 rounded">
               {paused ? <FaPlay /> : <FaPause />}
             </button>
-            <button onClick={increaseSpeed} className="bg-gray-800 text-white px-4 py-2 rounded flex items-center" disabled={speed === 10000}>
+            <button onClick={() => setFocusedPlanet(v => v == "Sun" ? "Mercury" as Planets : Object.values(Planets)[Object.values(Planets).indexOf(v)+1] ?? "Sun")} className="bg-gray-800 text-white px-4 py-2 rounded flex items-center" disabled={speed === 10000}>
               {renderChevrons("right")}
             </button>
           </div>
-          <p className="text-white text-lg mt-2 font-semibold">Speed: {speed > 0 ? `x${Math.round(speed)}` : `x-${Math.abs(Math.round(speed))}`}</p>
-        </div>
-      )}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} planetData={selectedPlanetData} />
+    </div>}
+      {/* <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} planetData={selectedPlanetData} /> */}
     </div>
   );
 }

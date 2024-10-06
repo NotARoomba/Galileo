@@ -1,8 +1,8 @@
 import { PlanetData } from "./Data";
-import { Planets } from "./Types";
+import { KeplerianElement, Planets } from "./Types";
 
 export const SCALE = 100000
-export const ORBIT_SCALE = SCALE/10000
+export const ORBIT_SCALE = 50
 
 // Function to compute the eccentric anomaly E from the mean anomaly M and eccentricity e
 function solveKepler(M: number, e: number): number {
@@ -17,59 +17,6 @@ function solveKepler(M: number, e: number): number {
 
     return E;
 }
-
-export function planetPosition(time: number, name: Planets) {
-    const planet = PlanetData[name.toLowerCase()];
-    const T = (time - 2451545.0) / 36525; // Julian centuries since J2000.0
-
-    // Update Keplerian elements based on time T
-    const a = planet.a + planet.a_dot * T; // Semi-major axis
-    const e = planet.e + planet.e_dot * T; // Eccentricity
-    const i_deg = planet.i_deg + planet.i_dot * T; // Inclination
-    const L_deg = planet.L_deg + planet.L_dot * T; // Mean longitude
-    const w_deg = planet.w_deg + planet.w_dot * T; // Longitude of perihelion
-    const node_deg = planet.node_deg + planet.node_dot * T; // Longitude of ascending node
-
-    // Compute argument of perihelion (ω) and mean anomaly (M)
-    const omega = w_deg - node_deg; // Argument of perihelion
-    const M_deg = L_deg - w_deg; // Mean anomaly
-
-    // Ensure mean anomaly is between -180° and +180°
-    let M = M_deg % 360;
-    if (M > 180) M -= 360;
-    if (M < -180) M += 360;
-
-    // Convert M to radians for computation
-    M = (M * Math.PI) / 180;
-
-    // Compute eccentric anomaly E by solving Kepler's equation M = E - e * sin(E)
-    const E = solveKepler(M, e);
-
-    // Compute the heliocentric coordinates in the orbital plane
-    const x_prime = a * (Math.cos(E) - e); // x' = a(cos(E) - e)
-    const y_prime = a * Math.sqrt(1 - e * e) * Math.sin(E); // y' = a√(1 - e²)sin(E)
-    // const z_prime = 0; // z' = 0
-
-    // Compute the final heliocentric coordinates in the J2000 ecliptic plane
-    const cos_omega = Math.cos((omega * Math.PI) / 180);
-    const sin_omega = Math.sin((omega * Math.PI) / 180);
-    const cos_node = Math.cos((node_deg * Math.PI) / 180);
-    const sin_node = Math.sin((node_deg * Math.PI) / 180);
-    const cos_i = Math.cos((i_deg * Math.PI) / 180);
-    const sin_i = Math.sin((i_deg * Math.PI) / 180);
-
-    const x_ecl =
-        (cos_omega * cos_node - sin_omega * sin_node * cos_i) * x_prime +
-        (-sin_omega * cos_node - cos_omega * sin_node * cos_i) * y_prime;
-    const y_ecl =
-        (cos_omega * sin_node + sin_omega * cos_node * cos_i) * x_prime +
-        (-sin_omega * sin_node + cos_omega * cos_node * cos_i) * y_prime;
-    const z_ecl = (sin_omega * sin_i) * x_prime + (cos_omega * sin_i) * y_prime;
-
-    // Return the x, y, and z coordinates in the J2000 ecliptic plane
-    return { x: x_ecl * ORBIT_SCALE, y: y_ecl * ORBIT_SCALE, z: z_ecl * ORBIT_SCALE };
-}
-
 // Convert a regular date to Julian Date
 export function dateToJulian(date: Date): number {
     const year = date.getUTCFullYear();
@@ -124,15 +71,92 @@ export function dateToJulian(date: Date): number {
     return new Date(Date.UTC(year, month - 1, Math.floor(day), hours, minutes, seconds));
   }
 
-  export function computeOrbit(time: number, name: Planets, steps = 360) {
-    const planet = PlanetData[name.toLowerCase()];
+  // Updated function to calculate planet position with an optional Keplerian element
+export function planetPosition(
+    time: number,
+    nameOrKepler: Planets | KeplerianElement
+): [number, number, number] {
+    let planet: KeplerianElement;
+
+    if (typeof nameOrKepler === "string") {
+        // Fetch planet data if the input is a planet name
+        planet = PlanetData[nameOrKepler.toLowerCase()];
+    } else {
+        // If input is a Keplerian element, use it directly
+        planet = nameOrKepler;
+    }
+
     const T = (time - 2451545.0) / 36525; // Julian centuries since J2000.0
 
     // Update Keplerian elements based on time T
     const a = planet.a + planet.a_dot * T; // Semi-major axis
     const e = planet.e + planet.e_dot * T; // Eccentricity
     const i_deg = planet.i_deg + planet.i_dot * T; // Inclination
-    // const L_deg = planet.L_deg + planet.L_dot * T; // Mean longitude
+    const L_deg = planet.L_deg + planet.L_dot * T; // Mean longitude
+    const w_deg = planet.w_deg + planet.w_dot * T; // Longitude of perihelion
+    const node_deg = planet.node_deg + planet.node_dot * T; // Longitude of ascending node
+
+    // Compute argument of perihelion (ω) and mean anomaly (M)
+    const omega = w_deg - node_deg; // Argument of perihelion
+    const M_deg = L_deg - w_deg; // Mean anomaly
+
+    // Ensure mean anomaly is between -180° and +180°
+    let M = M_deg % 360;
+    if (M > 180) M -= 360;
+    if (M < -180) M += 360;
+
+    // Convert M to radians for computation
+    M = (M * Math.PI) / 180;
+
+    // Compute eccentric anomaly E by solving Kepler's equation M = E - e * sin(E)
+    const E = solveKepler(M, e);
+
+    // Compute the heliocentric coordinates in the orbital plane
+    const x_prime = a * (Math.cos(E) - e); // x' = a(cos(E) - e)
+    const y_prime = a * Math.sqrt(1 - e * e) * Math.sin(E); // y' = a√(1 - e²)sin(E)
+
+    // Compute the final heliocentric coordinates in the J2000 ecliptic plane
+    const cos_omega = Math.cos((omega * Math.PI) / 180);
+    const sin_omega = Math.sin((omega * Math.PI) / 180);
+    const cos_node = Math.cos((node_deg * Math.PI) / 180);
+    const sin_node = Math.sin((node_deg * Math.PI) / 180);
+    const cos_i = Math.cos((i_deg * Math.PI) / 180);
+    const sin_i = Math.sin((i_deg * Math.PI) / 180);
+
+    const x_ecl =
+        (cos_omega * cos_node - sin_omega * sin_node * cos_i) * x_prime +
+        (-sin_omega * cos_node - cos_omega * sin_node * cos_i) * y_prime;
+    const y_ecl =
+        (cos_omega * sin_node + sin_omega * cos_node * cos_i) * x_prime +
+        (-sin_omega * sin_node + cos_omega * cos_node * cos_i) * y_prime;
+    const z_ecl = (sin_omega * sin_i) * x_prime + (cos_omega * sin_i) * y_prime;
+
+    // Return the x, y, and z coordinates in the J2000 ecliptic plane
+    return [x_ecl * ORBIT_SCALE, y_ecl * ORBIT_SCALE, z_ecl * ORBIT_SCALE];
+}
+
+// Updated function to compute orbit with an optional Keplerian element
+export function computeOrbit(
+    time: number,
+    nameOrKepler: Planets | KeplerianElement,
+    steps = 360
+): [number, number, number][] {
+    let planet: KeplerianElement;
+
+    if (typeof nameOrKepler === "string") {
+        // Fetch planet data if the input is a planet name
+        planet = PlanetData[nameOrKepler.toLowerCase()];
+    } else {
+        // If input is a Keplerian element, use it directly
+        planet = nameOrKepler;
+    }
+
+    const T = (time - 2451545.0) / 36525; // Julian centuries since J2000.0
+
+    // Update Keplerian elements based on time T
+    const a = planet.a + planet.a_dot * T; // Semi-major axis
+    const e = planet.e + planet.e_dot * T; // Eccentricity
+    const i_deg = planet.i_deg + planet.i_dot * T; // Inclination
     const w_deg = planet.w_deg + planet.w_dot * T; // Longitude of perihelion
     const node_deg = planet.node_deg + planet.node_dot * T; // Longitude of ascending node
 
@@ -147,7 +171,7 @@ export function dateToJulian(date: Date): number {
     const sin_i = Math.sin((i_deg * Math.PI) / 180);
 
     // Array to store the orbit points
-    const orbitPoints = [];
+    const orbitPoints: [number, number, number][] = [];
 
     // Compute the orbit for each point (step)
     for (let step = 0; step < steps; step++) {
@@ -171,14 +195,13 @@ export function dateToJulian(date: Date): number {
         const z_ecl = (sin_omega * sin_i) * x_prime + (cos_omega * sin_i) * y_prime;
 
         // Scale the coordinates and add them to the orbitPoints array
-        orbitPoints.push({
-            x: x_ecl * ORBIT_SCALE ,
-            y: y_ecl * ORBIT_SCALE,
-            z: z_ecl * ORBIT_SCALE,
-        });
+        orbitPoints.push([
+            x_ecl * ORBIT_SCALE,
+            y_ecl * ORBIT_SCALE,
+            z_ecl * ORBIT_SCALE,
+        ]);
     }
 
     // Return the array of orbit points
     return orbitPoints;
 }
-  

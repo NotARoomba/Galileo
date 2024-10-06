@@ -59,4 +59,4 @@ export interface PlanetInfo {
 }
 
 
-export interface SimplifiedPlanet { name: string, position: { x: number, y: number, z: number }, orbit: Array<{ x: number, y: number, z: number }> }
+export interface SimplifiedPlanet { name: string, position: [number, number, number], orbit: [number, number, number][] }

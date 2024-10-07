@@ -138,9 +138,9 @@ export default function Simulation() {
         const timeStep =
           Math.sign(speed) *
           Math.max(10, Math.abs(speed)) *
-          (speed < 10 ? 0.00000005 : 0.0001); // Increase time step with speed
+          (0.0001); // Increase time step with speed
         setJulianDate(
-          (prevDate) => prevDate + (speed == 1 ? 8.168808781403e-7 : timeStep),
+          (prevDate) => prevDate + (speed == 1 ? 6.168808781403e-7 : timeStep),
         ); // Faster progression as speed increases
       }
     }, 10);

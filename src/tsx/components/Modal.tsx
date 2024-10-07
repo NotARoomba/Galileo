@@ -25,11 +25,19 @@ export default function Modal({ isOpen, onClose, planetData }: ModalProps) {
       exit="exit"
       transition={{ duration: 0.3 }}
     >
-      <h2 className="text-lg font-bold">{planetData.object}</h2>
+      <h2 className="text-xl font-bold">{planetData.object}</h2>
       <p>Apoapsis: {(planetData.a * 2 * (1 + planetData.e)).toFixed(2)} AU</p>
       <p>Periapsis: {(planetData.a * 2 * (1 - planetData.e)).toFixed(2)} AU</p>
       <p>Eccentricity: {planetData.e}</p>
       <p>Distance from Sun: {planetData.a} AU</p>
+      {Object.keys(planetData).map(
+        (v, i) =>
+          v !== "lineColor" && (
+            <p key={i}>
+              {v[0].toUpperCase() + v.slice(1)}: {planetData[v]}
+            </p>
+          ),
+      )}
       <button
         className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
         onClick={onClose}

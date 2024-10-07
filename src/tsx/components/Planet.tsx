@@ -13,14 +13,16 @@ export default function Planet({
   rotationSpeed = 0.01,
   inclination = 0,
   lineColor,
+  showOrbit,
   onClick,
+  showTooltip,
   orbitPoints,
   position,
   name,
 }: PlanetProps) {
   const planetRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState<boolean>(false); // State for hover effect
-  const [showTooltip, setShowTooltip] = useState<boolean>(false); // Tooltip visibility
+  // Tooltip visibility
 
   // Load planet texture
   const texture = useLoader(TextureLoader, textureUrl);
@@ -44,7 +46,6 @@ export default function Planet({
   // Handle hover state and show tooltip
   const handleHover = (isHovered: boolean) => {
     setHovered(isHovered);
-    setShowTooltip(isHovered);
   };
 
   // React Spring animation for smooth scale effect on hover
@@ -70,18 +71,23 @@ export default function Planet({
       </a.mesh>
       {/* <primitive position={position} scale={size} object={gltf.scene} /> */}
       {/* Render orbit trail */}
-      <OrbitTrail
-        onClick={onClick}
-        lineColor={lineColor}
-        points={orbitPoints}
-        hovered={hovered}
-        setHovered={handleHover}
-      />
+      {showOrbit && (
+        <OrbitTrail
+          onClick={onClick}
+          lineColor={lineColor}
+          points={orbitPoints}
+          hovered={hovered}
+          setHovered={handleHover}
+        />
+      )}
 
       {/* Tooltip */}
+
       {showTooltip && (
-        <Html key={position[0]} position={position} className="w-72">
-          <div className="tooltip text-white font-bold">{name}</div>
+        <Html position={position} className="w-72">
+          <div onClick={onClick} className="tooltip text-white font-bold">
+            {name}
+          </div>
         </Html>
       )}
     </>

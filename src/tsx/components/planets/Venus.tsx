@@ -29,7 +29,9 @@ export default function Venus({
   rotationSpeed = 0.01,
   inclination = 0,
   lineColor,
+  showOrbit,
   onClick,
+  showTooltip,
   orbitPoints,
   position,
   name,
@@ -37,7 +39,7 @@ export default function Venus({
   const { nodes, materials } = useGLTF("/models/venus.glb") as GLTFResult;
   const planetRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState<boolean>(false); // State for hover effect
-  const [showTooltip, setShowTooltip] = useState<boolean>(false); // Tooltip visibility
+  // Tooltip visibility
   useFrame(() => {
     if (planetRef.current) {
       planetRef.current.rotation.y += rotationSpeed;
@@ -56,7 +58,6 @@ export default function Venus({
   // Handle hover state and show tooltip
   const handleHover = (isHovered: boolean) => {
     setHovered(isHovered);
-    setShowTooltip(isHovered);
   };
 
   // React Spring animation for smooth scale effect on hover
@@ -83,18 +84,23 @@ export default function Venus({
           rotation={[-Math.PI / 2, 0, 0]}
         />
       </a.group>
-      <OrbitTrail
-        onClick={onClick}
-        lineColor={lineColor}
-        points={orbitPoints}
-        hovered={hovered}
-        setHovered={handleHover}
-      />
+      {showOrbit && (
+        <OrbitTrail
+          onClick={onClick}
+          lineColor={lineColor}
+          points={orbitPoints}
+          hovered={hovered}
+          setHovered={handleHover}
+        />
+      )}
 
       {/* Tooltip */}
+
       {showTooltip && (
-        <Html key={position[0]} position={position} className="w-72">
-          <div className="tooltip text-white font-bold">{name}</div>
+        <Html position={position} className="w-72">
+          <div onClick={onClick} className="tooltip text-white font-bold">
+            {name}
+          </div>
         </Html>
       )}
     </>

@@ -90,6 +90,7 @@ export function planetPosition(
   } else {
     // If input is a Keplerian element, use it directly
     planet = nameOrKepler;
+    // console.log(nameOrKepler)
   }
 
   const T = (time - 2451545.0) / 36525; // Julian centuries since J2000.0
@@ -136,7 +137,7 @@ export function planetPosition(
     (cos_omega * sin_node + sin_omega * cos_node * cos_i) * x_prime +
     (-sin_omega * sin_node + cos_omega * cos_node * cos_i) * y_prime;
   const z_ecl = sin_omega * sin_i * x_prime + cos_omega * sin_i * y_prime;
-
+  // console.log(x_ecl, y_ecl, z_ecl)
   // Return the x, y, and z coordinates in the J2000 ecliptic plane
   return [x_ecl * ORBIT_SCALE, y_ecl * ORBIT_SCALE, z_ecl * ORBIT_SCALE];
 }

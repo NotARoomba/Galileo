@@ -1,5 +1,5 @@
 import { a, useSpring } from "@react-spring/three";
-import { Html, useGLTF } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
@@ -21,7 +21,7 @@ type MoonProps = {
 };
 
 const ORBIT_RADIUS = 5; // Fixed distance (radius) for the Moon's orbit around Earth
-const ORBIT_STEPS = 3600 * 2; // Number of points in the orbit
+const ORBIT_STEPS = 3600; // Number of points in the orbit
 
 // Function to generate orbit points for a circular orbit
 function generateOrbitPoints(
@@ -47,7 +47,6 @@ export function Moon({ position, onClick }: MoonProps) {
   );
   const [currentStep, setCurrentStep] = useState(0); // Keep track of the Moon's current position along the orbit
   const [hovered, setHovered] = useState<boolean>(false);
-  const [showTooltip, setShowTooltip] = useState<boolean>(false);
 
   useEffect(() => {
     // Generate orbit points around the given position (Earth's position)
@@ -73,7 +72,6 @@ export function Moon({ position, onClick }: MoonProps) {
 
   const handleHover = (isHovered: boolean) => {
     setHovered(isHovered);
-    setShowTooltip(isHovered);
   };
 
   return (
@@ -103,11 +101,10 @@ export function Moon({ position, onClick }: MoonProps) {
         hovered={hovered}
         setHovered={handleHover}
       /> */}
-      {showTooltip && (
-        <Html key={position[0]} position={position} className="w-72">
-          <div className="tooltip text-white font-bold">Moon</div>
-        </Html>
-      )}
+
+      {/* <Html  position={moonRef?.current?.position} className="w-72">
+          <div onClick={onClick} className="tooltip text-white font-bold">Moon</div>
+        </Html> */}
     </>
   );
 }

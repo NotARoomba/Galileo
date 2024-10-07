@@ -1,3 +1,4 @@
+import { a, useSpring } from "@react-spring/three";
 import { OrbitControls, Stars } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import moment from "moment";
@@ -5,6 +6,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { FaChevronLeft, FaChevronRight, FaPause, FaPlay } from "react-icons/fa";
 import { Vector3 } from "three";
 import Loader from "../components/Loader";
+import { Meteorite } from "../components/Meteorite";
 import Modal from "../components/Modal";
 import Earth from "../components/planets/Earth";
 import Jupiter from "../components/planets/Jupiter";
@@ -24,7 +26,6 @@ import {
   planetPosition,
 } from "../utils/Functions";
 import { KeplerianElement, Planets, SimplifiedPlanet } from "../utils/Types";
-import NEO from "../components/NEO";
 
 export default function Simulation() {
   const [julianDate, setJulianDate] = useState<number>(
@@ -45,11 +46,31 @@ export default function Simulation() {
   const animationTimeoutRef = useRef<number | null>(null); // Reference for animation timeout
   const [asteroidsRAW, setAsteroidsRAW] = useState<KeplerianElement[]>([]);
   const [asteroids, setAsteroids] = useState<SimplifiedPlanet[]>([]);
+  const orbitControlsRef = useRef();
+  const focusedPlanetPosition =
+    focusedPlanet === "Sun"
+      ? ([0, 0, 0] as [number, number, number]) // Sun's position
+      : (planetPositions.find((planet) => planet.name === focusedPlanet)
+          ?.position ??
+        asteroids.find((planet) => planet.name === focusedPlanet)?.position);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [showOrbit, setShowOrbit] = useState(true);
+  // Spring animation for smooth camera movement
+  const { position } = useSpring({
+    position: (focusedPlanetPosition || [0, 0, 50]) as [number, number, number], // Default to [0,0,50] if no planet is found
+    config: { tension: 120, friction: 20 }, // Adjust spring tension and friction for smoothness
+  });
+
+  // Function to handle planet focus change
+  const handleFocusPlanet = (newPlanet: Planets | "Sun") => {
+    setFocusedPlanet(newPlanet);
+  };
 
   // Fetch asteroid data from NASA's Open Data API
   const calclateAsteroidPositions = (a: KeplerianElement[]) => {
-    return a.map((asteroid) => {
+    return a.map((asteroid, i) => {
       const pos = planetPosition(julianDate, asteroid);
+      // if (i == 0) console.log(pos)
       const orbitPoints = computeOrbit(julianDate, asteroid);
       return { name: asteroid.object, position: pos, orbit: orbitPoints };
     });
@@ -70,7 +91,7 @@ export default function Simulation() {
         );
         const data = await response.json();
 
-        data.length = 50;
+        data.length = 5;
 
         const transformedAsteroids = data.map(
           (asteroid: any): KeplerianElement => {
@@ -80,15 +101,15 @@ export default function Simulation() {
                 (parseFloat(asteroid.q_au_1) + parseFloat(asteroid.q_au_2)) / 2, // Semi-major axis (average of perihelion and aphelion)
               a_dot: 0, // Placeholder, you may want to compute or estimate this
               e: parseFloat(asteroid.e), // Eccentricity
-              e_dot: 0, // Placeholder
+              e_dot: 0.00004392, // Placeholder
               i_deg: parseFloat(asteroid.i_deg), // Inclination in degrees
-              i_dot: 0, // Placeholder
-              L_deg: 0, // Placeholder (Mean longitude)
-              L_dot: 0, // Placeholder
+              i_dot: 0.00004392, // Placeholder
+              L_deg: 100, // Placeholder (Mean longitude)
+              L_dot: 500, // Placeholder
               w_deg: parseFloat(asteroid.w_deg), // Argument of periapsis
               w_dot: 0, // Placeholder
               node_deg: parseFloat(asteroid.node_deg), // Longitude of ascending node
-              node_dot: 0, // Placeholder
+              node_dot: 1, // Placeholder
               size: parseFloat(asteroid.moid_au) * SCALE, // Assuming MOID gives a rough idea of size
               lineColor: "gray", // Customize based on conditions, or leave it static
               rotationSpeed: 0.01, // Static or computed based on object properties
@@ -118,7 +139,9 @@ export default function Simulation() {
           Math.sign(speed) *
           Math.max(10, Math.abs(speed)) *
           (speed < 10 ? 0.00000005 : 0.0001); // Increase time step with speed
-        setJulianDate((prevDate) => prevDate + timeStep); // Faster progression as speed increases
+        setJulianDate(
+          (prevDate) => prevDate + (speed == 1 ? 8.168808781403e-7 : timeStep),
+        ); // Faster progression as speed increases
       }
     }, 10);
 
@@ -132,7 +155,7 @@ export default function Simulation() {
     setTargetSpeed((prevSpeed) => {
       if (prevSpeed < -1) return Math.round(prevSpeed / 10); // Increase from larger negative (-100 -> -10)
       if (prevSpeed === -1) return 1; // Flip from -1 to 1
-      return Math.round(Math.min(prevSpeed * 10, 10000)); // Cap at 10000x forward speed
+      return Math.round(Math.min(prevSpeed * 10, 1000000)); // Cap at 10000x forward speed
     });
   };
 
@@ -140,7 +163,7 @@ export default function Simulation() {
     setTargetSpeed((prevSpeed) => {
       if (prevSpeed > 1) return Math.round(prevSpeed / 10); // Decrease from larger positive (100 -> 10)
       if (prevSpeed === 1) return -1; // Flip from 1 to -1
-      return Math.round(Math.max(prevSpeed * 10, -10000)); // Cap at -10000x backward speed
+      return Math.round(Math.max(prevSpeed * 10, -1000000)); // Cap at -10000x backward speed
     });
   };
 
@@ -180,7 +203,7 @@ export default function Simulation() {
 
   // Helper function to render chevrons based on speed
   const renderChevrons = (direction: "left" | "right") => {
-    const chevronCount = Math.min(Math.log10(Math.abs(speed)), 4) + 1; // Limit chevrons to a max of 4
+    const chevronCount = Math.min(Math.log10(Math.abs(speed)), 6) + 1; // Limit chevrons to a max of 4
     return Array.from({ length: chevronCount }, (_, i) =>
       direction === "left" ? (
         <FaChevronLeft key={i} />
@@ -191,7 +214,11 @@ export default function Simulation() {
   };
 
   const handlePlanetClick = (planet: SimplifiedPlanet) => {
-    setSelectedPlanetData(PlanetData[planet.name.toLowerCase()]);
+    setFocusedPlanet(planet.name as Planets);
+    setSelectedPlanetData(
+      PlanetData[planet.name.toLowerCase()] ??
+        asteroidsRAW.find((v) => v.object == planet.name),
+    );
     setIsModalOpen(true);
   };
 
@@ -217,7 +244,6 @@ export default function Simulation() {
             intensity={1000}
             size={(1 / SCALE) * 69634.0}
           />
-
           {/* Manually rendering each planet */}
           {planetPositions.map((planet) => {
             const planetComponentProps = {
@@ -227,6 +253,8 @@ export default function Simulation() {
               size: PlanetData[planet.name.toLowerCase()].size * (3 / SCALE),
               position: planet.position,
               orbitPoints: planet.orbit,
+              showTooltip,
+              showOrbit,
               lineColor: PlanetData[planet.name.toLowerCase()].lineColor,
               rotationSpeed:
                 PlanetData[planet.name.toLowerCase()].rotationSpeed,
@@ -262,21 +290,29 @@ export default function Simulation() {
             }
           })}
 
-          {/* {asteroids.map((asteroid) => (
-         <NEO orbitPoints={asteroid.orbit} position={asteroid.position} objectName={asteroid.name} onClick={() => handlePlanetClick(asteroid)} />
-        ))} */}
+          {asteroids.map((asteroid) => (
+            <Meteorite
+              orbitPoints={asteroid.orbit}
+              showOrbit={showOrbit}
+              showTooltip={showTooltip}
+              position={asteroid.position}
+              name={asteroid.name}
+              onClick={() => {
+                handlePlanetClick(asteroid);
+              }}
+              size={(1 / SCALE) * 50000}
+            />
+          ))}
           {/* <SkyBox /> */}
-
-          <OrbitControls
-            enableZoom={true}
-            enablePan={false}
-            enableRotate={true}
-            target={
-              focusedPlanet == "Sun"
-                ? [0, 0, 0]
-                : planetPositions.find((v) => v.name == focusedPlanet)?.position
-            }
-          />
+          <a.group position={position}>
+            <OrbitControls
+              ref={orbitControlsRef as unknown as any}
+              enableZoom={true}
+              enablePan={false}
+              enableRotate={true}
+              target={new Vector3(...position.get())}
+            />
+          </a.group>
           <ambientLight intensity={1} />
         </Suspense>
       </Canvas>
@@ -321,23 +357,34 @@ export default function Simulation() {
           <p className="text-white font-bold text-3xl">{focusedPlanet}</p>
           <div className="flex space-x-4 mt-2 items-center">
             <button
-              onClick={() =>
+              onClick={() => {
                 setFocusedPlanet((v) =>
                   v == "Sun"
                     ? ("Neptune" as Planets)
                     : (Object.values(Planets)[
                         Object.values(Planets).indexOf(v) - 1
                       ] ?? "Sun"),
-                )
-              }
+                );
+              }}
               className="bg-gray-800 text-white px-4 py-2 rounded flex items-center"
-              disabled={speed === -10000}
             >
               <FaChevronLeft />
             </button>
-            {/* <button onClick={togglePause} className="bg-gray-800 text-white px-4 py-2 rounded">
-              {paused ? <FaPlay /> : <FaPause />}
-            </button> */}
+            <div className="flex flex-col gap-y-2">
+              <button
+                onClick={() => setShowTooltip(!showTooltip)}
+                className="bg-gray-800 font-semibold text-white px-4 py-2 rounded"
+              >
+                {showTooltip ? "Hide" : "Show"} Tooltips
+              </button>
+              <button
+                onClick={() => setShowOrbit(!showOrbit)}
+                className="bg-gray-800 font-semibold text-white px-4 py-2 rounded"
+              >
+                {showOrbit ? "Hide" : "Show"} Orbits
+              </button>
+            </div>
+
             <button
               onClick={() =>
                 setFocusedPlanet((v) =>
@@ -349,7 +396,6 @@ export default function Simulation() {
                 )
               }
               className="bg-gray-800 text-white px-4 py-2 rounded flex items-center"
-              disabled={speed === 10000}
             >
               <FaChevronRight />
             </button>

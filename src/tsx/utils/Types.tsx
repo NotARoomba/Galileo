@@ -7,9 +7,11 @@ export interface OrbitTrailProps {
 }
 export interface PlanetProps {
   name: string;
+  showTooltip: boolean;
   inclination: number;
   julianTime?: number;
   textureUrl: string;
+  showOrbit: boolean;
   onClick: () => void;
   lineColor: string;
   size: number;

@@ -29,7 +29,9 @@ export default function Uranus({
   rotationSpeed = 0.01,
   inclination = 0,
   lineColor,
+  showOrbit,
   onClick,
+  showTooltip,
   orbitPoints,
   position,
   name,
@@ -37,7 +39,6 @@ export default function Uranus({
   const planetRef = useRef<THREE.Mesh>(null);
   const { nodes, materials } = useGLTF("/models/uranus.glb") as GLTFResult;
   const [hovered, setHovered] = useState<boolean>(false);
-  const [showTooltip, setShowTooltip] = useState<boolean>(false);
 
   useFrame(() => {
     if (planetRef.current) {
@@ -55,7 +56,6 @@ export default function Uranus({
 
   const handleHover = (isHovered: boolean) => {
     setHovered(isHovered);
-    setShowTooltip(isHovered);
   };
 
   const { scale } = useSpring({
@@ -82,17 +82,21 @@ export default function Uranus({
           rotation={[-Math.PI / 2, 0, 0]}
         />
       </a.group>
-      <OrbitTrail
-        onClick={onClick}
-        lineColor={lineColor}
-        points={orbitPoints}
-        hovered={hovered}
-        setHovered={handleHover}
-      />
+      {showOrbit && (
+        <OrbitTrail
+          onClick={onClick}
+          lineColor={lineColor}
+          points={orbitPoints}
+          hovered={hovered}
+          setHovered={handleHover}
+        />
+      )}
 
       {showTooltip && (
-        <Html position={planetRef.current?.position} className="w-72">
-          <div className="tooltip text-white font-bold">{name}</div>
+        <Html position={position} className="w-72">
+          <div onClick={onClick} className="tooltip text-white font-bold">
+            {name}
+          </div>
         </Html>
       )}
     </>

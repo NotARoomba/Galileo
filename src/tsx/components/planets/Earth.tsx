@@ -22,8 +22,10 @@ export default function Earth({
   rotationSpeed = 0.01,
   inclination = 0,
   lineColor,
+  showOrbit,
   onClick,
   orbitPoints,
+  showTooltip,
   position,
   julianTime,
   name,
@@ -31,7 +33,6 @@ export default function Earth({
   const { nodes, materials } = useGLTF("/models/earth.glb") as GLTFResult;
   const planetRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState<boolean>(false);
-  const [showTooltip, setShowTooltip] = useState<boolean>(false);
 
   useFrame(() => {
     if (planetRef.current) {
@@ -54,7 +55,6 @@ export default function Earth({
 
   const handleHover = (isHovered: boolean) => {
     setHovered(isHovered);
-    setShowTooltip(isHovered);
   };
 
   const { scale } = useSpring({
@@ -83,13 +83,15 @@ export default function Earth({
       </a.group>
 
       {/* Earth's Orbit Trail */}
-      <OrbitTrail
-        onClick={onClick}
-        lineColor={lineColor}
-        points={orbitPoints}
-        hovered={hovered}
-        setHovered={handleHover}
-      />
+      {showOrbit && (
+        <OrbitTrail
+          onClick={onClick}
+          lineColor={lineColor}
+          points={orbitPoints}
+          hovered={hovered}
+          setHovered={handleHover}
+        />
+      )}
 
       {/* Moon Component - Rotating Around Earth */}
       <Moon
@@ -99,9 +101,12 @@ export default function Earth({
       />
 
       {/* Tooltip */}
+
       {showTooltip && (
-        <Html key={position[0]} position={position} className="w-72">
-          <div className="tooltip text-white font-bold">{name}</div>
+        <Html position={position} className="w-72">
+          <div onClick={onClick} className="tooltip text-white font-bold">
+            {name}
+          </div>
         </Html>
       )}
     </>

@@ -30,7 +30,9 @@ export default function Jupiter({
   rotationSpeed = 0.01,
   inclination = 0,
   lineColor,
+  showOrbit,
   onClick,
+  showTooltip,
   orbitPoints,
   position,
   name,
@@ -38,7 +40,6 @@ export default function Jupiter({
   const planetRef = useRef<THREE.Mesh>(null);
   const { nodes, materials } = useGLTF("/models/jupiter.glb") as GLTFResult;
   const [hovered, setHovered] = useState<boolean>(false);
-  const [showTooltip, setShowTooltip] = useState<boolean>(false);
 
   useFrame(() => {
     if (planetRef.current) {
@@ -56,7 +57,6 @@ export default function Jupiter({
 
   const handleHover = (isHovered: boolean) => {
     setHovered(isHovered);
-    setShowTooltip(isHovered);
   };
 
   const { scale } = useSpring({
@@ -84,17 +84,21 @@ export default function Jupiter({
           rotation={[-Math.PI / 2, 0, 0]}
         />
       </a.group>
-      <OrbitTrail
-        onClick={onClick}
-        lineColor={lineColor}
-        points={orbitPoints}
-        hovered={hovered}
-        setHovered={handleHover}
-      />
+      {showOrbit && (
+        <OrbitTrail
+          onClick={onClick}
+          lineColor={lineColor}
+          points={orbitPoints}
+          hovered={hovered}
+          setHovered={handleHover}
+        />
+      )}
 
       {showTooltip && (
-        <Html key={position[0]} position={position} className="w-72">
-          <div className="tooltip text-white font-bold">{name}</div>
+        <Html position={position} className="w-72">
+          <div onClick={onClick} className="tooltip text-white font-bold">
+            {name}
+          </div>
         </Html>
       )}
     </>

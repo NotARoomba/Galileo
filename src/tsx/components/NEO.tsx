@@ -22,7 +22,6 @@ export default function NEO({
 }: NEOProps) {
   const dotRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState<boolean>(false);
-  const [showTooltip, setShowTooltip] = useState<boolean>(false);
 
   // Rotate the gray dot
   useFrame(() => {
@@ -34,7 +33,6 @@ export default function NEO({
   // Handle hover state and show tooltip
   const handleHover = (isHovered: boolean) => {
     setHovered(isHovered);
-    setShowTooltip(isHovered);
   };
 
   // React Spring animation for smooth scale effect on hover
@@ -66,11 +64,12 @@ export default function NEO({
         setHovered={handleHover}
       />
       {/* Tooltip */}
-      {showTooltip && (
-        <Html position={position} className="w-40">
-          <div className="tooltip text-white font-bold">{objectName}</div>
-        </Html>
-      )}
+
+      <Html position={position} className="w-40">
+        <div onClick={onClick} className="tooltip text-white font-bold">
+          {objectName}
+        </div>
+      </Html>
     </>
   );
 }

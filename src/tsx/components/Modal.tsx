@@ -18,26 +18,30 @@ export default function Modal({ isOpen, onClose, planetData }: ModalProps) {
 
   return (
     <motion.div
-      className="bg-gray-900 absolute top-0 left-0 text-white p-6 rounded-lg shadow-lg max-w-sm w-full m-4"
+      className="bg-gray-900 absolute h-fit  lg:top-0 lg:left-0 lg:-translate-x-0 top-64 left-0 text-white p-6 rounded-lg shadow-lg max-w-sm  m-4"
       variants={modalVariants}
       initial="hidden"
       animate="visible"
       exit="exit"
       transition={{ duration: 0.3 }}
     >
-      <h2 className="text-xl font-bold">{planetData.object}</h2>
-      <p>Apoapsis: {(planetData.a * 2 * (1 + planetData.e)).toFixed(2)} AU</p>
-      <p>Periapsis: {(planetData.a * 2 * (1 - planetData.e)).toFixed(2)} AU</p>
-      <p>Eccentricity: {planetData.e}</p>
-      <p>Distance from Sun: {planetData.a} AU</p>
-      {Object.keys(planetData).map(
-        (v, i) =>
-          v !== "lineColor" && (
-            <p key={i}>
-              {v[0].toUpperCase() + v.slice(1)}: {planetData[v]}
-            </p>
-          ),
-      )}
+      <h2 className="text-3xl font-bold">{planetData.object}</h2>
+      <div className="text-sm md:text-lg break-words flex flex-wrap gap-x-8 overflow-scroll">
+        <p>Apoapsis: {(planetData.a * 2 * (1 + planetData.e)).toFixed(2)} AU</p>
+        <p>
+          Periapsis: {(planetData.a * 2 * (1 - planetData.e)).toFixed(2)} AU
+        </p>
+        <p>Eccentricity: {planetData.e}</p>
+        <p>Distance from Sun: {planetData.a} AU</p>
+        {Object.keys(planetData).map(
+          (v, i) =>
+            v !== "lineColor" && (
+              <p key={i}>
+                {v[0].toUpperCase() + v.slice(1)}: {planetData[v]}
+              </p>
+            ),
+        )}
+      </div>
       <button
         className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
         onClick={onClose}

@@ -1,10 +1,11 @@
 import { a, useSpring } from "@react-spring/three";
-import { OrbitControls, Stars } from "@react-three/drei";
+import { Stars, TrackballControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import moment from "moment";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { FaChevronLeft, FaChevronRight, FaPause, FaPlay } from "react-icons/fa";
 import { Vector3 } from "three";
+import type { TrackballControls as TrackballControlsImp } from "three-stdlib";
 import Loader from "../components/Loader";
 import { Meteorite } from "../components/Meteorite";
 import Modal from "../components/Modal";
@@ -46,7 +47,7 @@ export default function Simulation() {
   const animationTimeoutRef = useRef<number | null>(null); // Reference for animation timeout
   const [asteroidsRAW, setAsteroidsRAW] = useState<KeplerianElement[]>([]);
   const [asteroids, setAsteroids] = useState<SimplifiedPlanet[]>([]);
-  const orbitControlsRef = useRef();
+  const orbitControlsRef = useRef<TrackballControlsImp>(null);
   const focusedPlanetPosition =
     focusedPlanet === "Sun"
       ? ([0, 0, 0] as [number, number, number]) // Sun's position
@@ -60,11 +61,6 @@ export default function Simulation() {
     position: (focusedPlanetPosition || [0, 0, 50]) as [number, number, number], // Default to [0,0,50] if no planet is found
     config: { tension: 120, friction: 20 }, // Adjust spring tension and friction for smoothness
   });
-
-  // Function to handle planet focus change
-  const handleFocusPlanet = (newPlanet: Planets | "Sun") => {
-    setFocusedPlanet(newPlanet);
-  };
 
   // Fetch asteroid data from NASA's Open Data API
   const calclateAsteroidPositions = (a: KeplerianElement[]) => {
@@ -136,9 +132,7 @@ export default function Simulation() {
         setPlanetPositions(calculatePlanetPositions());
         setAsteroids(calclateAsteroidPositions(asteroidsRAW));
         const timeStep =
-          Math.sign(speed) *
-          Math.max(10, Math.abs(speed)) *
-          (0.0001); // Increase time step with speed
+          Math.sign(speed) * Math.max(10, Math.abs(speed)) * 0.0001; // Increase time step with speed
         setJulianDate(
           (prevDate) => prevDate + (speed == 1 ? 6.168808781403e-7 : timeStep),
         ); // Faster progression as speed increases
@@ -305,11 +299,11 @@ export default function Simulation() {
           ))}
           {/* <SkyBox /> */}
           <a.group position={position}>
-            <OrbitControls
-              ref={orbitControlsRef as unknown as any}
-              enableZoom={true}
-              enablePan={false}
-              enableRotate={true}
+            <TrackballControls
+              ref={orbitControlsRef}
+              // enableZoom={true}
+              // enablePan={false}
+              // enableRotate={true}
               target={new Vector3(...position.get())}
             />
           </a.group>
@@ -320,26 +314,26 @@ export default function Simulation() {
       {/* Speed control and pause/play UI */}
 
       {!loading && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center bg-opacity-75 bg-gray-900 p-4 rounded-lg">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center bg-opacity-75 bg-gray-900 p-4 rounded-xl">
           <p className="text-white font-bold text-3xl text-center">
             {moment(julianToDate(julianDate)).format("HH:mm:ss DD MMM YYYY")}
           </p>
           <div className="flex space-x-4 mt-2 items-center">
             <button
               onClick={decreaseSpeed}
-              className="bg-gray-800 text-white px-4 py-2 rounded flex items-center"
+              className="bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center"
             >
               {renderChevrons("left")}
             </button>
             <button
               onClick={togglePause}
-              className="bg-gray-800 text-white px-4 py-2 rounded"
+              className="bg-gray-800 text-white px-4 py-2 rounded-lg"
             >
               {paused ? <FaPlay /> : <FaPause />}
             </button>
             <button
               onClick={increaseSpeed}
-              className="bg-gray-800 text-white px-4 py-2 rounded flex items-center"
+              className="bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center"
             >
               {renderChevrons("right")}
             </button>
@@ -353,7 +347,7 @@ export default function Simulation() {
         </div>
       )}
       {!loading && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center bg-opacity-75 bg-gray-900 p-4 rounded-lg">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center bg-opacity-75 bg-gray-900 p-4 rounded-xl">
           <p className="text-white font-bold text-3xl">{focusedPlanet}</p>
           <div className="flex space-x-4 mt-2 items-center">
             <button
@@ -366,20 +360,20 @@ export default function Simulation() {
                       ] ?? "Sun"),
                 );
               }}
-              className="bg-gray-800 text-white px-4 py-2 rounded flex items-center"
+              className="bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center"
             >
               <FaChevronLeft />
             </button>
             <div className="flex flex-col gap-y-2">
               <button
                 onClick={() => setShowTooltip(!showTooltip)}
-                className="bg-gray-800 font-semibold text-white px-4 py-2 rounded"
+                className="bg-gray-800 font-semibold text-white px-4 py-2 rounded-lg"
               >
                 {showTooltip ? "Hide" : "Show"} Tooltips
               </button>
               <button
                 onClick={() => setShowOrbit(!showOrbit)}
-                className="bg-gray-800 font-semibold text-white px-4 py-2 rounded"
+                className="bg-gray-800 font-semibold text-white px-4 py-2 rounded-lg"
               >
                 {showOrbit ? "Hide" : "Show"} Orbits
               </button>
@@ -395,7 +389,7 @@ export default function Simulation() {
                       ] ?? "Sun"),
                 )
               }
-              className="bg-gray-800 text-white px-4 py-2 rounded flex items-center"
+              className="bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center"
             >
               <FaChevronRight />
             </button>

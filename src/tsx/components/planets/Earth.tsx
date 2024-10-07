@@ -102,8 +102,8 @@ export default function Earth({
 
       {/* Tooltip */}
 
-      {showTooltip && (
-        <Html position={position} className="w-72">
+      {(showTooltip || hovered) && (
+        <Html position={position} className="w-72 cursor-pointer">
           <div onClick={onClick} className="tooltip text-white font-bold">
             {name}
           </div>

@@ -49,7 +49,7 @@ export function Meteorite({
   });
 
   const { scale } = useSpring({
-    scale: hovered ? size * 1.2 : size, // Scale up when hovered
+    scale: hovered ? size : size, // Scale up when hovered
     config: { tension: 300, friction: 30 },
   });
 
@@ -90,8 +90,8 @@ export function Meteorite({
 
       {/* Tooltip */}
 
-      {showTooltip && (
-        <Html position={position} className="w-72">
+      {(showTooltip || hovered) && (
+        <Html position={position} className="w-72 cursor-pointer">
           <div onClick={onClick} className="tooltip text-white font-bold">
             {name}
           </div>

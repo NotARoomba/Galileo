@@ -67,7 +67,7 @@ export default function Saturn({
   };
 
   const { scale } = useSpring({
-    scale: hovered ? size * 0.01 : size * 0.005,
+    scale: hovered ? size * 0.005 : size * 0.005,
     config: { tension: 300, friction: 30 },
   });
 
@@ -168,8 +168,8 @@ export default function Saturn({
         />
       )}
 
-      {showTooltip && (
-        <Html position={position} className="w-72">
+      {(showTooltip || hovered) && (
+        <Html position={position} className="w-72 cursor-pointer">
           <div onClick={onClick} className="tooltip text-white font-bold">
             {name}
           </div>

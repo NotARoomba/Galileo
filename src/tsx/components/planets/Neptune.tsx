@@ -17,10 +17,10 @@ import OrbitTrail from "../OrbitTrail";
 
 type GLTFResult = GLTF & {
   nodes: {
-    Object_2: THREE.Mesh;
+    Object_2001: THREE.Mesh;
   };
   materials: {
-    moon: THREE.MeshStandardMaterial;
+    ["moon.004"]: THREE.MeshStandardMaterial;
   };
 };
 
@@ -42,7 +42,7 @@ export default function Neptune({
 
   useFrame(() => {
     if (planetRef.current) {
-      planetRef.current.rotation.y += rotationSpeed;
+      planetRef.current.rotation.z += rotationSpeed;
     }
   });
 
@@ -59,7 +59,7 @@ export default function Neptune({
   };
 
   const { scale } = useSpring({
-    scale: hovered ? size * 5 : size,
+    scale: hovered ? size : size,
     config: { tension: 300, friction: 30 },
   });
 
@@ -77,8 +77,8 @@ export default function Neptune({
           ref={planetRef}
           castShadow
           receiveShadow
-          geometry={nodes.Object_2.geometry}
-          material={materials.moon}
+          geometry={nodes.Object_2001.geometry}
+          material={materials["moon.004"]}
           rotation={[-Math.PI / 2, 0, 0]}
         />
       </a.group>
@@ -92,8 +92,8 @@ export default function Neptune({
         />
       )}
 
-      {showTooltip && (
-        <Html position={position} className="w-72">
+      {(showTooltip || hovered) && (
+        <Html position={position} className="w-72 cursor-pointer">
           <div onClick={onClick} className="tooltip text-white font-bold">
             {name}
           </div>

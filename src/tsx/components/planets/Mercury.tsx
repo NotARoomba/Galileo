@@ -61,7 +61,7 @@ export default function Mercury({
 
   // React Spring animation for smooth scale effect on hover
   const { scale } = useSpring({
-    scale: hovered ? size * 5 : size, // Scale up when hovered
+    scale: hovered ? size : size, // Scale up when hovered
     config: { tension: 300, friction: 30 }, // Adjust animation speed and bounciness
   });
   return (
@@ -95,8 +95,8 @@ export default function Mercury({
 
       {/* Tooltip */}
 
-      {showTooltip && (
-        <Html position={position} className="w-72">
+      {(showTooltip || hovered) && (
+        <Html position={position} className="w-72 cursor-pointer">
           <div onClick={onClick} className="tooltip text-white font-bold">
             {name}
           </div>

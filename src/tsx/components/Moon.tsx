@@ -102,7 +102,7 @@ export function Moon({ position, onClick }: MoonProps) {
         setHovered={handleHover}
       /> */}
 
-      {/* <Html  position={moonRef?.current?.position} className="w-72">
+      {/* <Html  position={moonRef?.current?.position} className="w-72 cursor-pointer">
           <div onClick={onClick} className="tooltip text-white font-bold">Moon</div>
         </Html> */}
     </>

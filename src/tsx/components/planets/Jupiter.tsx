@@ -60,7 +60,7 @@ export default function Jupiter({
   };
 
   const { scale } = useSpring({
-    scale: hovered ? size * 5 : size,
+    scale: hovered ? size : size,
     config: { tension: 300, friction: 30 },
   });
 
@@ -94,8 +94,8 @@ export default function Jupiter({
         />
       )}
 
-      {showTooltip && (
-        <Html position={position} className="w-72">
+      {(showTooltip || hovered) && (
+        <Html position={position} className="w-72 cursor-pointer">
           <div onClick={onClick} className="tooltip text-white font-bold">
             {name}
           </div>

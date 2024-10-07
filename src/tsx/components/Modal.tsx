@@ -26,7 +26,7 @@ export default function Modal({ isOpen, onClose, planetData }: ModalProps) {
       transition={{ duration: 0.3 }}
     >
       <h2 className="text-3xl font-bold">{planetData.object}</h2>
-      <div className="text-sm md:text-lg break-words flex flex-wrap gap-x-8 overflow-scroll">
+      <div className="text-sm md:text-lg break-words flex flex-wrap gap-x-8">
         <p>Apoapsis: {(planetData.a * 2 * (1 + planetData.e)).toFixed(2)} AU</p>
         <p>
           Periapsis: {(planetData.a * 2 * (1 - planetData.e)).toFixed(2)} AU
